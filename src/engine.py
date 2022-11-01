@@ -3,8 +3,6 @@ import torch
 import torch.nn as nn
 
 
-
-
 def train_one_epoch(model: nn.Module, iterator: Iterable,
     criterion: nn.Module,
     optimizer: torch.optim.Optimizer,
