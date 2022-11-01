@@ -1,0 +1,12 @@
+torch
+torchvision
+torchdata
+torchtext
+matplotlib
+numpy
+pandas
+sklearn
+scipy
+jupyter
+notebook
+
