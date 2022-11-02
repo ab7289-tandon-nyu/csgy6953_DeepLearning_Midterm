@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+from typing import List, Tuple
+
 
 class ResidualBlock(nn.Module):
     '''
@@ -53,11 +55,25 @@ class ResNet(nn.Module):
     Class representing a full ResNet model
     '''
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, architecture: List[Tuple[int,int]], output_size: int = 10, learning_rate: float = 1e-3, *args, **kwargs):
         '''
         returns an instance of a ResNet
         '''
-        pass
+        self.stem = self.create_stem()
+        self.classifier = self.create_classifier(output_size)
+
+        self.body = nn.Sequential()
+        for idx, layer_def in enumerate(architecture):
+            self.body.add_module(f"block_{idx+2}", self.create_block(*layer_def, first_block=(idx == 0)))
+
+
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        """
+        Performs forward pass of the inputs through the network
+        """
+        x = self.stem(inputs)
+        x = self.body(x)
+        return self.classifier(x)
 
     def create_stem(self, num_channels: int = 64, kernel_size: int = 7, stride: int = 2, padding: int = 3) \
             -> nn.Sequential:
@@ -71,3 +87,22 @@ class ResNet(nn.Module):
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
         )
+
+    def create_classifier(self, num_classes: int) -> nn.Sequential:
+        '''
+        Creates a sequential classifier head at the very 
+        '''
+        return nn.Sequential(
+            nn.AdaptiveAvgPool2d(1),
+            nn.Flatten(),
+            nn.LazyLinear(num_classes)
+        )
+
+    def create_block(self, num_residuals: int, num_channels: int, first_block: bool = False) -> nn.Sequential:
+        layer = []
+        for i in range(num_residuals):
+            if i == 0 and not first_block:
+                layer.append(ResidualBlock(num_channels, use_stem=True, strides=2))
+            else:
+                layer.append(ResidualBlock(num_channels))
+        return nn.Sequential(*layer)
