@@ -34,7 +34,7 @@ def train_one_epoch(model: nn.Module, iterator: Iterable,
         optimizer.step()
 
         epoch_loss += loss.item()
-        epoch_acc += acc
+        epoch_acc  += acc.item()
 
     return epoch_loss / len(iterator), epoch_acc / len(iterator)
 
@@ -63,6 +63,6 @@ def evaluate(model: nn.Module, iterator: Iterable, criterion: nn.Module,
             acc         = num_correct.float() / label.shape[0]
 
             epoch_loss += loss.item()
-            epoch_acc += acc.item()
+            epoch_acc  += acc.item()
             
     return epoch_loss / len(iterator), epoch_acc / len(iterator)
