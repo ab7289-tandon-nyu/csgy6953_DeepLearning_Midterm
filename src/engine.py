@@ -16,24 +16,27 @@ def train_one_epoch(model: nn.Module, iterator: Iterable,
 
     model.train()
     for image, label in iterator:
-        image = image.to(device)
-        label = label.to(device)
+        image = image.to(device) # [BATCH_SIZE=256, RGB=3, IMAGE_SIZE=32, IMAGE_SIZE=32]
+        label = label.to(device) # [BATCH_SIZE=256]
 
         optimizer.zero_grad()
 
-        y_pred = model(image)
+        y_pred = model(image)    # [BATCH_SIZE=256, NUM_CLASSES=10]
 
         loss = criterion(y_pred, label)
 
-        # TODO calculate accuracy
+        # calculate accuracy (reference: HW4 Q4 def calculate_accuracy(y_pred, y))
+        top_y_pred = y_pred.argmax(1, keepdim = True) # [BATCH_SIZE=256,1] each an int in [0, NUM_CLASSES-1=9]
+        num_correct = top_y_pred.eq( label.view_as(top_y_pred) ).sum()
+        acc         = num_correct.float() / label.shape[0]
 
         loss.backward()
         optimizer.step()
 
         epoch_loss += loss.item()
-        # epoch_acc += acc
+        epoch_acc += acc
 
-    return epoch_loss / len(iterator)#, epoch_acc / len(iterator)
+    return epoch_loss / len(iterator), epoch_acc / len(iterator)
 
 
 def evaluate(model: nn.Module, iterator: Iterable, criterion: nn.Module,
@@ -47,15 +50,19 @@ def evaluate(model: nn.Module, iterator: Iterable, criterion: nn.Module,
     
     with torch.no_grad():
         for image, label in iterator:
-            image = image.to(device)
-            label = label.to(device)
+            image = image.to(device) # [BATCH_SIZE=256, RGB=3, IMAGE_SIZE=32, IMAGE_SIZE=32]
+            label = label.to(device) # [BATCH_SIZE=256]
 
-            y_pred = model(image)
+            y_pred = model(image)    # [BATCH_SIZE=256, NUM_CLASSES=10]
 
             loss = criterion(y_pred, label)
 
-            # TODO calculate accuracy
+            # calculate accuracy
+            top_y_pred = y_pred.argmax(1, keepdim = True) # [BATCH_SIZE=256,1] each an int in [0, NUM_CLASSES-1=9]
+            num_correct = top_y_pred.eq( label.view_as(top_y_pred) ).sum()
+            acc         = num_correct.float() / label.shape[0]
 
             epoch_loss += loss.item()
-            # epoch_acc += acc.item()
-    return epoch_loss / len(iterator)#, epoch_acc / len(iterator)
+            epoch_acc += acc.item()
+            
+    return epoch_loss / len(iterator), epoch_acc / len(iterator)
