@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 
 class ResidualBlock(nn.Module):
@@ -26,7 +26,7 @@ class ResidualBlock(nn.Module):
         self.conv1 = nn.LazyConv2d(
             num_channels, kernel_size=3, padding=1, stride=strides)
         self.conv2 = nn.LazyConv2d(
-            num_channels, kernel_size=3, padding=1, stride=strides)
+            num_channels, kernel_size=3, padding=1)
         self.relu = nn.ReLU(inplace=True)
         self.out = nn.ReLU(inplace=True)
         self.bn1 = nn.LazyBatchNorm2d()
@@ -50,17 +50,38 @@ class ResidualBlock(nn.Module):
         return self.out(x)
 
 
+class StemConfig:
+    '''
+    convenience class to encapsulate configuration options
+    for the ResNet stem
+    '''
+    def __init__(self, num_channels, kernel_size, stride, padding):
+        self.num_channels = num_channels
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
+
+
+
 class ResNet(nn.Module):
     '''
     Class representing a full ResNet model
     '''
 
-    def __init__(self, architecture: List[Tuple[int,int]], output_size: int = 10, learning_rate: float = 1e-3, *args, **kwargs):
+    def __init__(self, architecture: List[Tuple[int,int]], stem_config: Optional[StemConfig], output_size: int = 10, *args, **kwargs):
         '''
         returns an instance of a ResNet
         '''
-        super().__init()
-        self.stem = self.create_stem()
+        super().__init__()
+        if stem_config is not None:
+            self.stem = self.create_stem(
+                stem_config.num_channels,
+                stem_config.kernel_size,
+                stem_config.stride,
+                stem_config.padding
+            )
+        else:
+            self.stem = self.create_stem()
         self.classifier = self.create_classifier(output_size)
 
         self.body = nn.Sequential()
@@ -76,6 +97,7 @@ class ResNet(nn.Module):
         x = self.body(x)
         return self.classifier(x)
 
+
     def create_stem(self, num_channels: int = 64, kernel_size: int = 7, stride: int = 2, padding: int = 3) \
             -> nn.Sequential:
         """
@@ -86,7 +108,7 @@ class ResNet(nn.Module):
                           padding=padding, stride=stride),
             nn.LazyBatchNorm2d(),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
+            # nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
         )
 
     def create_classifier(self, num_classes: int) -> nn.Sequential:
@@ -107,3 +129,4 @@ class ResNet(nn.Module):
             else:
                 layer.append(ResidualBlock(num_channels))
         return nn.Sequential(*layer)
+        
