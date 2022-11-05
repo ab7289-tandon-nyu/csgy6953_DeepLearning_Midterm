@@ -10,3 +10,10 @@ def initialize_parameters(m: nn.Module) -> None:
         nn.init.xavier_normal_(m.weight.data, gain = nn.init.calculate_gain('relu'))
         if m.bias is not None:
             nn.init.constant_(m.bias.data, 0)
+
+
+def epoch_time(start_time, end_time):
+    elapsed_time = end_time - start_time
+    elapsed_mins = int(elapsed_time / 60)
+    elapsed_secs = int(elapsed_time - (elapsed_mins * 60))
+    return elapsed_mins, elapsed_secs
