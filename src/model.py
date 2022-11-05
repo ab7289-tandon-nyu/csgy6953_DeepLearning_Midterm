@@ -59,6 +59,7 @@ class ResNet(nn.Module):
         '''
         returns an instance of a ResNet
         '''
+        super().__init()
         self.stem = self.create_stem()
         self.classifier = self.create_classifier(output_size)
 
