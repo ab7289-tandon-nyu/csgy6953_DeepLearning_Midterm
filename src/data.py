@@ -7,33 +7,15 @@ import torch
 import copy
 
 
-## Download TRAIN (50K) data
-ROOT = '.data'
-train_data = datasets.CIFAR10(root = ROOT, train = True, download = True) # len = 50,000
-
-
-## Prepare to normalize data (the same way for TRAIN and TEST)
+## 2. Prepare to normalize data (the same way for TRAIN and TEST)
 def summarize_train_data(train_data):
     '''Compute means and standard deviations along the R,G,B channel'''
     means = train_data.data.mean(axis = (0, 1, 2)) / 255
     stds  = train_data.data.std( axis = (0, 1, 2)) / 255
     # EACH returns a tensor of shape (3,) = a vector of size 3 (= R,G,B)
     return means, stds
-train_data_means, train_data_stds = summarize_train_data(train_data)
 
-
-## Augment TRAIN data; Normalize data (the same way  for TRAIN and TEST)
-from src.transforms import make_transforms
-train_transforms, test_transforms = make_transforms(train_data_means, train_data_stds)
-
-
-## Load and custom-partition data
-
-# train_data is of length 50,000
-train_data = datasets.CIFAR10(ROOT,train = True, download  = True, transform = train_transforms)
-# test_data is of length 10,000
-test_data  = datasets.CIFAR10(ROOT, train = False, download  = True, transform = test_transforms)
-
+## 4. Load and custom-partition data
 def partition_train_data(train_data, valid_ratio):
     '''partition TRAIN data into TRAIN and VALID'''
 
@@ -46,17 +28,40 @@ def partition_train_data(train_data, valid_ratio):
     
     return train_data, copy.deepcopy(valid_data)
 
-VALID_RATIO = 0.1
-# 10% of TRAIN will become VALID
-# 90% of TRAIN will remain TRAIN
-train_data, valid_data = partition_train_data(train_data, VALID_RATIO)
 
-# will Augment and Normalize VALID data the same way as we do TEST data
-valid_data.dataset.transform = test_transforms
+## drives 1. through 4.
+# from src.transforms import make_transforms
+def get_transformed_data(make_transforms, valid_ratio):
+    '''@param valid_ratio - the share of train_data that will redesignate as valid_data'''
 
-## Data loader
+    ## 1. Download TRAIN (50K) data
+    ROOT = '.data'
+    train_data = datasets.CIFAR10(root = ROOT, train = True, download = True) # len = 50,000
 
-def data_loaders(train_data, valid_data, test_data, batch_size):
+    ## 2. Prepare to normalize data (the same way for TRAIN and TEST)
+    train_data_means, train_data_stds = summarize_train_data(train_data)
+
+    ## 3. Augment TRAIN data; Normalize data (the same way  for TRAIN and TEST)
+    train_transforms, test_transforms = make_transforms(train_data_means, train_data_stds)
+
+    ## 4. Load and custom-partition data
+
+    # train_data is of length 50,000
+    train_data = datasets.CIFAR10(ROOT,train = True, download  = True, transform = train_transforms)
+    # test_data is of length 10,000
+    test_data  = datasets.CIFAR10(ROOT, train = False, download  = True, transform = test_transforms)
+
+    ## 4. Load and custom-partition data
+    train_data, valid_data = partition_train_data(train_data, valid_ratio)
+
+    ## 4. Load and custom-partition data
+    # will Augment and Normalize VALID data the same way as we do TEST data
+    valid_data.dataset.transform = test_transforms
+
+    return train_data, valid_data, test_data
+
+## 5. Data loader
+def make_data_loaders(train_data, valid_data, test_data, batch_size):
 
     # training requires shuffling
     train_iterator = \
