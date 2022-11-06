@@ -1,6 +1,17 @@
 # How to load and transform CIFAR-10 data
 # source: HW2 Q4 (AlexNet-like deep CNN classifies CIFAR-10 images)
 
+# (temporary:) how to load data:
+#
+# BATCH_SIZE = 256
+# VALID_RATIO = 0.1
+#
+# train_data, valid_data, test_data = \
+# get_transformed_data(make_transforms = make_transforms, valid_ratio = VALID_RATIO)
+#
+# train_iterator, valid_iterator, test_iterator = \
+# make_data_loaders(train_data, valid_data, test_data, BATCH_SIZE)
+
 import torchvision.datasets as datasets
 import torch.utils.data as data
 import torch
