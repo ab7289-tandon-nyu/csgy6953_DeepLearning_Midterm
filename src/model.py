@@ -24,8 +24,7 @@ class ResidualBlock(nn.Module):
         self.use_stem = use_stem
         self.strides = strides
 
-        self.dropout = nn.Dropout(
-            dropout, inplace=True) if dropout is not None else None
+        self.dropout = nn.Dropout(dropout) if dropout is not None else None
         self.conv1 = nn.LazyConv2d(
             num_channels, kernel_size=3, padding=1, stride=strides)
         self.conv2 = nn.LazyConv2d(
