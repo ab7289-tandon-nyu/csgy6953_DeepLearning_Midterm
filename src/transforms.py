@@ -6,6 +6,7 @@ from typing import Tuple
 
 def make_transforms(means: torch.Tensor, std_devs: torch.Tensor) -> Tuple:
     '''
+    added a comment
     Given a tensor of computed means and a tensor of computed standard devations,
     return's a tuple containing a train and test transform pipelines
     '''
