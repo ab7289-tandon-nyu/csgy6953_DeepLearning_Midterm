@@ -1,9 +1,16 @@
 import torch
 import torch.nn as nn
+from enum import Enum 
 
 from typing import List, Tuple, Optional
 
-
+class ResidualBlockType(Enum):
+    '''
+    Enum class to represent the residual block type for ResNet
+    '''
+    BASIC = 0
+    BOTTLENECK = 1
+    
 class ResidualBlock(nn.Module):
     '''
     Class representing a convolutional residual block 
@@ -55,6 +62,64 @@ class ResidualBlock(nn.Module):
         return self.out(x)
 
 
+class ResidualBottleNeck(nn.Module):
+    '''
+    Class representing a convolutional residual block with a bottleneck
+    This class was built with reference to: 
+    https://github.com/kuangliu/pytorch-cifar/blob/master/models/resnet.py
+    '''
+
+    def __init__(self, num_channels: int, use_stem: bool = False, strides: int=1, factor: int=4):
+        '''
+        Creates a new instance of a Residual BottleNeck Block
+        @param: num_channels (int) - the number of output channels for all convolutions in the block
+        @param: use_stem (bool) - whether a 1x1 convolution is needed to downsample the residual
+        @param: strides (int) - the number of strides to use in the convolutions, defaults to 1
+        @param: factor (int) - the factor by which the input channels will be reduced for the bottleneck
+        '''
+        super().__init__()
+        self.num_channels = num_channels
+        self.use_stem = use_stem
+        self.strides = strides
+        self.factor = factor
+
+        # First convolutional layer with normalization
+        self.conv1 = nn.LazyConv2d(
+            num_channels//factor, kernel_size=1, padding=0)
+        self.bn1 = nn.LazyBatchNorm2d()
+        
+        # Second convolutional layer with normalization
+        self.conv2 = nn.LazyConv2d(
+            num_channels//factor, kernel_size=3, padding=1, stride=strides)
+        self.bn2 = nn.LazyBatchNorm2d()
+        
+        # Third convolutional layer with normalization
+        self.conv3 = nn.LazyConv2d(
+            num_channels, kernel_size=1, padding=0)
+        self.bn3 = nn.LazyBatchNorm2d()
+
+        self.relu = nn.ReLU(inplace=True)
+
+        self.conv_stem = None
+        if use_stem:
+            # Bottleneck residual block 
+            self.conv_stem = nn.LazyConv2d(
+                num_channels, kernel_size=1, stride=strides)
+
+
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        shortcut = inputs
+        x = self.relu(self.bn1(self.conv1(inputs)))
+        x = self.relu(self.bn2(self.conv2(x)))
+        x = self.bn3(self.conv3(x))
+        if self.use_stem:
+            # downsample skip connection
+            shortcut = self.conv_stem(shortcut)
+
+        # add in skip connection
+        x += shortcut
+        return self.relu(x)
+
 class StemConfig:
     '''
     convenience class to encapsulate configuration options
@@ -73,7 +138,7 @@ class ResNet(nn.Module):
     Class representing a full ResNet model
     '''
 
-    def __init__(self, architecture: List[Tuple[int, int, float]], stem_config: Optional[StemConfig],
+    def __init__(self, architecture: List[Tuple[ResidualBlockType, int, int, float]], stem_config: Optional[StemConfig],
         output_size: int = 10, use_bias: bool = False, *args, **kwargs):
         '''
         returns an instance of a ResNet
