@@ -1,25 +1,12 @@
-# How to load and transform CIFAR-10 data
-# source: HW2 Q4 (AlexNet-like deep CNN classifies CIFAR-10 images)
-
-# (temporary:) how to load data:
-#
-# BATCH_SIZE = 256
-# VALID_RATIO = 0.1
-#
-# train_data, valid_data, test_data = \
-# get_transformed_data(make_transforms = make_transforms, valid_ratio = VALID_RATIO)
-#
-# train_iterator, valid_iterator, test_iterator = \
-# make_data_loaders(train_data, valid_data, test_data, BATCH_SIZE)
-
 import torchvision.datasets as datasets
 import torch.utils.data as data
 import torch
 import copy
+from typing import Tuple
 
 
 ## 2. Prepare to normalize data (the same way for TRAIN and TEST)
-def summarize_train_data(train_data):
+def summarize_train_data(train_data: torchvision.datasets.cifar.CIFAR10) -> Tuple[torch.Tensor , torch.Tensor]:
     '''Compute means and standard deviations along the R,G,B channel'''
     means = train_data.data.mean(axis = (0, 1, 2)) / 255
     stds  = train_data.data.std( axis = (0, 1, 2)) / 255
@@ -40,14 +27,21 @@ def partition_train_data(train_data, valid_ratio):
     return train_data, copy.deepcopy(valid_data)
 
 
-## drives 1. through 4.
-# from src.transforms import make_transforms
-def get_transformed_data(make_transforms, valid_ratio):
-    '''@param valid_ratio - the share of train_data that will redesignate as valid_data'''
-
+## 1. through 4.
+def get_transformed_data(make_transforms: function, valid_ratio: float) -> Tuple[
+    torch.utils.data.dataset.Subset,
+    torch.utils.data.dataset.Subset,
+    torchvision.datasets.cifar.CIFAR10]:
+    '''
+    Where transform = augment & normalize
+    @param: make_transforms (function) - how to augment & normalize train and non-train data
+        (e.g. this function defined in `from src.transforms import make_transforms`)
+    @param: valid_ratio (float) - the share of train_data that will redesignate as valid_data
+    '''
+    
     ## 1. Download TRAIN (50K) data
     ROOT = '.data'
-    train_data = datasets.CIFAR10(root = ROOT, train = True, download = True) # len = 50,000
+    train_data = datasets.CIFAR10(root = ROOT, train = True, download = True) # len=50K
 
     ## 2. Prepare to normalize data (the same way for TRAIN and TEST)
     train_data_means, train_data_stds = summarize_train_data(train_data)
@@ -57,22 +51,27 @@ def get_transformed_data(make_transforms, valid_ratio):
 
     ## 4. Load and custom-partition data
 
-    # train_data is of length 50,000
-    train_data = datasets.CIFAR10(ROOT,train = True, download  = True, transform = train_transforms)
-    # test_data is of length 10,000
-    test_data  = datasets.CIFAR10(ROOT, train = False, download  = True, transform = test_transforms)
+    # load TRAIN (50K) and TEST (10K) data
+    train_data = datasets.CIFAR10(ROOT, train=True,  download=True, transform=train_transforms)
+    test_data  = datasets.CIFAR10(ROOT, train=False, download=True, transform=test_transforms)
 
-    ## 4. Load and custom-partition data
+    # custom-partition data: TRAIN -> VALID(valid_ratio) & TRAIN(1 - valid_ratio)
     train_data, valid_data = partition_train_data(train_data, valid_ratio)
 
-    ## 4. Load and custom-partition data
-    # will Augment and Normalize VALID data the same way as we do TEST data
+    # will transform (= augment & normalize) VALID data the same way as we do TEST data
     valid_data.dataset.transform = test_transforms
 
     return train_data, valid_data, test_data
 
 ## 5. Data loader
-def make_data_loaders(train_data, valid_data, test_data, batch_size):
+def make_data_loaders(
+    train_data: torch.utils.data.dataset.Subset,
+    valid_data: torch.utils.data.dataset.Subset, 
+    test_data:  torchvision.datasets.cifar.CIFAR10,
+    batch_size: int) -> Tuple[
+        torch.utils.data.dataloader.DataLoader,
+        torch.utils.data.dataloader.DataLoader,
+        torch.utils.data.dataloader.DataLoader]:
 
     # training requires shuffling
     train_iterator = \
