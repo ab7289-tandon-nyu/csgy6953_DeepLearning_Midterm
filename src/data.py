@@ -2,7 +2,7 @@ import torchvision.datasets as datasets
 import torch.utils.data as data
 import torch
 import copy
-from typing import Tuple
+from typing import Tuple, Callable
 
 
 ## 2. Prepare to normalize data (the same way for TRAIN and TEST)
@@ -28,13 +28,13 @@ def partition_train_data(train_data, valid_ratio):
 
 
 ## 1. through 4.
-def get_transformed_data(make_transforms: function, valid_ratio: float) -> Tuple[
+def get_transformed_data(make_transforms: Callable, valid_ratio: float) -> Tuple[
     torch.utils.data.dataset.Subset,
     torch.utils.data.dataset.Subset,
     datasets.cifar.CIFAR10]:
     '''
     Where transform = augment & normalize
-    @param: make_transforms (function) - how to augment & normalize train and non-train data
+    @param: make_transforms (Callable) - how to augment & normalize train and non-train data
         (e.g. this function defined in `from src.transforms import make_transforms`)
     @param: valid_ratio (float) - the share of train_data that will redesignate as valid_data
     '''
