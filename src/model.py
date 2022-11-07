@@ -89,9 +89,9 @@ class ResNet(nn.Module):
         self.classifier = self.create_classifier(output_size)
 
         self.body = nn.Sequential()
-        for idx, layer_def in enumerate(architecture):
+        for idx, block_def in enumerate(architecture):
             self.body.add_module(
-                f"block_{idx+2}", self.create_block(*layer_def, first_block=(idx == 0)))
+                f"block_{idx+2}", self.create_block(*block_def, first_block=(idx == 0)))
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         """
