@@ -6,7 +6,7 @@ from typing import Tuple
 
 
 ## 2. Prepare to normalize data (the same way for TRAIN and TEST)
-def summarize_train_data(train_data: torchvision.datasets.cifar.CIFAR10) -> Tuple[torch.Tensor , torch.Tensor]:
+def summarize_train_data(train_data: datasets.cifar.CIFAR10) -> Tuple[torch.Tensor , torch.Tensor]:
     '''Compute means and standard deviations along the R,G,B channel'''
     means = train_data.data.mean(axis = (0, 1, 2)) / 255
     stds  = train_data.data.std( axis = (0, 1, 2)) / 255
@@ -31,7 +31,7 @@ def partition_train_data(train_data, valid_ratio):
 def get_transformed_data(make_transforms: function, valid_ratio: float) -> Tuple[
     torch.utils.data.dataset.Subset,
     torch.utils.data.dataset.Subset,
-    torchvision.datasets.cifar.CIFAR10]:
+    datasets.cifar.CIFAR10]:
     '''
     Where transform = augment & normalize
     @param: make_transforms (function) - how to augment & normalize train and non-train data
@@ -67,7 +67,7 @@ def get_transformed_data(make_transforms: function, valid_ratio: float) -> Tuple
 def make_data_loaders(
     train_data: torch.utils.data.dataset.Subset,
     valid_data: torch.utils.data.dataset.Subset, 
-    test_data:  torchvision.datasets.cifar.CIFAR10,
+    test_data:  datasets.cifar.CIFAR10,
     batch_size: int) -> Tuple[
         torch.utils.data.dataloader.DataLoader,
         torch.utils.data.dataloader.DataLoader,
