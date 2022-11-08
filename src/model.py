@@ -100,7 +100,9 @@ class ResNet(nn.Module):
                 self.create_block(
                     *block_def,
                     first_block=(idx == 0),
-                    in_channels=(architecture[idx-1][0] if idx != 0 else 3)))
+                    in_channels=(architecture[idx-1][0] if idx != 0 else 3)
+                )
+            )
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         """
