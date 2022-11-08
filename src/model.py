@@ -26,9 +26,9 @@ class ResidualBlock(nn.Module):
 
         self.dropout = nn.Dropout(dropout) if dropout is not None else None
         self.conv1 = nn.LazyConv2d(
-            num_channels, kernel_size=3, padding=1, stride=strides)
+            num_channels, kernel_size=3, padding=1, stride=strides, bias=False)
         self.conv2 = nn.LazyConv2d(
-            num_channels, kernel_size=3, padding=1)
+            num_channels, kernel_size=3, padding=1, bias=False)
         self.relu = nn.ReLU(inplace=True)
         self.out = nn.ReLU(inplace=True)
         self.bn1 = nn.LazyBatchNorm2d()
@@ -37,7 +37,7 @@ class ResidualBlock(nn.Module):
         self.conv_stem = None
         if use_stem:
             self.conv_stem = nn.LazyConv2d(
-                num_channels, kernel_size=1, stride=strides)
+                num_channels, kernel_size=1, stride=strides, bias=False)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         shortcut = inputs
@@ -108,7 +108,7 @@ class ResNet(nn.Module):
         """
         return nn.Sequential(
             nn.LazyConv2d(num_channels, kernel_size=kernel_size,
-                          padding=padding, stride=stride),
+                          padding=padding, stride=stride, bias=False),
             nn.LazyBatchNorm2d(),
             nn.ReLU(inplace=True),
             # nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
