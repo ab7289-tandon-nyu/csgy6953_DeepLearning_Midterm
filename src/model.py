@@ -9,7 +9,9 @@ class ResidualBlock(nn.Module):
     Class representing a convolutional residual block 
     '''
 
-    def __init__(self, num_channels: int, use_stem: bool = False, strides: int = 1, dropout: Optional[float] = None):
+    def __init__(
+            self, num_channels: int, use_stem: bool = False, strides: int = 1,
+            dropout: Optional[float] = None, in_channels: int = 3):
         '''
         Creates a new instance of a Residual Block
         @param: num_channels (int) - the number of output channels for all convolutions in 
@@ -25,19 +27,19 @@ class ResidualBlock(nn.Module):
         self.strides = strides
 
         self.dropout = nn.Dropout(dropout) if dropout is not None else None
-        self.conv1 = nn.LazyConv2d(
-            num_channels, kernel_size=3, padding=1, stride=strides)
-        self.conv2 = nn.LazyConv2d(
-            num_channels, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv2d(in_channels,
+                               num_channels, kernel_size=3, padding=1, stride=strides, bias=False)
+        self.conv2 = nn.Conv2d(num_channels,
+                               num_channels, kernel_size=3, padding=1, bias=False)
         self.relu = nn.ReLU(inplace=True)
         self.out = nn.ReLU(inplace=True)
-        self.bn1 = nn.LazyBatchNorm2d()
-        self.bn2 = nn.LazyBatchNorm2d()
+        self.bn1 = nn.BatchNorm2d(num_channels)
+        self.bn2 = nn.BatchNorm2d(num_channels)
 
         self.conv_stem = None
         if use_stem:
-            self.conv_stem = nn.LazyConv2d(
-                num_channels, kernel_size=1, stride=strides)
+            self.conv_stem = nn.Conv2d(in_channels,
+                                       num_channels, kernel_size=1, stride=strides, bias=False)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         shortcut = inputs
@@ -72,7 +74,10 @@ class ResNet(nn.Module):
     Class representing a full ResNet model
     '''
 
-    def __init__(self, architecture: List[Tuple[int, int, float]], stem_config: Optional[StemConfig], output_size: int = 10, *args, **kwargs):
+    def __init__(
+        self, architecture: List[Tuple[int, int, float]], stem_config: Optional[StemConfig],
+        output_size: int = 10, *args, **kwargs
+    ):
         '''
         returns an instance of a ResNet
         '''
@@ -91,7 +96,11 @@ class ResNet(nn.Module):
         self.body = nn.Sequential()
         for idx, block_def in enumerate(architecture):
             self.body.add_module(
-                f"block_{idx+2}", self.create_block(*block_def, first_block=(idx == 0)))
+                f"block_{idx+2}",
+                self.create_block(
+                    *block_def,
+                    first_block=(idx == 0),
+                    in_channels=(architecture[idx-1][0] if idx != 0 else 3)))
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         """
@@ -107,9 +116,9 @@ class ResNet(nn.Module):
         Creates a sequential stem as the first component of the model
         """
         return nn.Sequential(
-            nn.LazyConv2d(num_channels, kernel_size=kernel_size,
-                          padding=padding, stride=stride),
-            nn.LazyBatchNorm2d(),
+            nn.Conv2d(3, num_channels, kernel_size=kernel_size,
+                      padding=padding, stride=stride),
+            nn.BatchNorm2d(num_channels),
             nn.ReLU(inplace=True),
             # nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
         )
@@ -121,15 +130,19 @@ class ResNet(nn.Module):
         return nn.Sequential(
             nn.AdaptiveAvgPool2d(1),
             nn.Flatten(),
-            nn.LazyLinear(num_classes)
+            nn.Linear(256, num_classes)
         )
 
-    def create_block(self, num_residuals: int, num_channels: int, dropout: float, first_block: bool = False) -> nn.Sequential:
+    def create_block(
+        self, num_residuals: int, num_channels: int, dropout: float, first_block: bool = False,
+        in_channels: int = 3
+    ) -> nn.Sequential:
         layer = []
         for i in range(num_residuals):
             if i == 0 and not first_block:
                 layer.append(ResidualBlock(
-                    num_channels, dropout=dropout, use_stem=True, strides=2))
+                    num_channels, dropout=dropout, use_stem=True, strides=2, in_channels=in_channels))
             else:
-                layer.append(ResidualBlock(num_channels, dropout=dropout))
+                layer.append(ResidualBlock(
+                    num_channels, dropout=dropout, in_channels=in_channels))
         return nn.Sequential(*layer)
