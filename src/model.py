@@ -72,7 +72,8 @@ class ResNet(nn.Module):
     Class representing a full ResNet model
     '''
 
-    def __init__(self, architecture: List[Tuple[int, int, float]], stem_config: Optional[StemConfig], output_size: int = 10, *args, **kwargs):
+    def __init__(self, architecture: List[Tuple[int, int, float]], stem_config: Optional[StemConfig], output_size: int = 10,
+        avg_pool_size: int = 1, *args, **kwargs):
         '''
         returns an instance of a ResNet
         '''
@@ -86,7 +87,7 @@ class ResNet(nn.Module):
             )
         else:
             self.stem = self.create_stem()
-        self.classifier = self.create_classifier(output_size)
+        self.classifier = self.create_classifier(output_size,pool_size=avg_pool_size)
 
         self.body = nn.Sequential()
         for idx, block_def in enumerate(architecture):
@@ -111,15 +112,15 @@ class ResNet(nn.Module):
                           padding=padding, stride=stride),
             nn.LazyBatchNorm2d(),
             nn.ReLU(inplace=True),
-            # nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
+            # nn.MaxPool2d(kernel_size=2),
         )
 
-    def create_classifier(self, num_classes: int) -> nn.Sequential:
+    def create_classifier(self, num_classes: int, pool_size: int = 1) -> nn.Sequential:
         '''
         Creates a sequential classifier head at the very 
         '''
         return nn.Sequential(
-            nn.AdaptiveAvgPool2d(1),
+            nn.AdaptiveAvgPool2d(pool_size),
             nn.Flatten(),
             nn.LazyLinear(num_classes)
         )
