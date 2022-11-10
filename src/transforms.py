@@ -1,5 +1,6 @@
 import torch
 import torchvision.transforms as transforms
+from torchvision.transforms import autoaugment
 
 from typing import Tuple
 
@@ -25,3 +26,19 @@ def make_transforms(means: torch.Tensor, std_devs: torch.Tensor) -> Tuple:
     ])
 
     return train_transforms, test_transforms
+
+
+def make_auto_transforms(means: torch.Tensor, std_devs: torch.Tensor) -> Tuple:
+    '''
+    Utilizes PyTorch'es AutoAugment class
+    '''
+    policy = autoaugment.AutoAugmentPolicy.CIFAR10
+
+    train_trainsforms = transforms.AutoAugment(policy = policy)
+
+    test_transforms = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(mean = means, std = std_devs)
+    ])
+
+    return train_trainsforms, test_transforms
