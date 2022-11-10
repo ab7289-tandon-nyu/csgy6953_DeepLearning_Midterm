@@ -34,7 +34,11 @@ def make_auto_transforms(means: torch.Tensor, std_devs: torch.Tensor) -> Tuple:
     '''
     policy = autoaugment.AutoAugmentPolicy.CIFAR10
 
-    train_trainsforms = transforms.AutoAugment(policy = policy)
+    train_trainsforms = transforms.Compose([
+        transforms.AutoAugment(policy = policy),
+        transforms.ToTensor(),
+        transforms.Normalize(mean = means, std = std_devs)
+    ])
 
     test_transforms = transforms.Compose([
         transforms.ToTensor(),
