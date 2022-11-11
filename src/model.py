@@ -93,6 +93,8 @@ class ResNet(nn.Module):
             self.stem = self.create_stem()
         self.classifier = self.create_classifier(output_size)
 
+        stem_output = stem_config.num_channels if stem_config else 64
+
         self.body = nn.Sequential()
         for idx, block_def in enumerate(architecture):
             self.body.add_module(
@@ -100,7 +102,7 @@ class ResNet(nn.Module):
                 self.create_block(
                     *block_def,
                     first_block=(idx == 0),
-                    in_channels=(architecture[idx-1][0] if idx != 0 else 3)
+                    in_channels=(architecture[idx-1][1] if idx != 0 else stem_output)
                 )
             )
 
@@ -132,7 +134,7 @@ class ResNet(nn.Module):
         return nn.Sequential(
             nn.AdaptiveAvgPool2d(1),
             nn.Flatten(),
-            nn.Linear(256, num_classes)
+            nn.Linear(196, num_classes)
         )
 
     def create_block(
@@ -140,7 +142,10 @@ class ResNet(nn.Module):
         in_channels: int = 3
     ) -> nn.Sequential:
         layer = []
+        
         for i in range(num_residuals):
+            if i != 0:
+                in_channels = num_channels
             if i == 0 and not first_block:
                 layer.append(ResidualBlock(
                     num_channels, dropout=dropout, use_stem=True, strides=2, in_channels=in_channels))
