@@ -1,8 +1,9 @@
 import torch
 import torch.nn as nn
-from enum import Enum 
+from enum import Enum
 
 from typing import List, Tuple, Optional
+
 
 class ResidualBlockType(Enum):
     '''
@@ -10,7 +11,8 @@ class ResidualBlockType(Enum):
     '''
     BASIC = 0
     BOTTLENECK = 1
-    
+
+
 class ResidualBlock(nn.Module):
     '''
     Class representing a convolutional residual block 
@@ -69,7 +71,7 @@ class ResidualBottleNeck(nn.Module):
     https://github.com/kuangliu/pytorch-cifar/blob/master/models/resnet.py
     '''
 
-    def __init__(self, num_channels: int, use_stem: bool = False, strides: int=1, factor: int=4):
+    def __init__(self, num_channels: int, use_stem: bool = False, strides: int = 1, factor: int = 4):
         '''
         Creates a new instance of a Residual BottleNeck Block
         @param: num_channels (int) - the number of output channels for all convolutions in the block
@@ -87,12 +89,12 @@ class ResidualBottleNeck(nn.Module):
         self.conv1 = nn.LazyConv2d(
             num_channels//factor, kernel_size=1, padding=0)
         self.bn1 = nn.LazyBatchNorm2d()
-        
+
         # Second convolutional layer with normalization
         self.conv2 = nn.LazyConv2d(
             num_channels//factor, kernel_size=3, padding=1, stride=strides)
         self.bn2 = nn.LazyBatchNorm2d()
-        
+
         # Third convolutional layer with normalization
         self.conv3 = nn.LazyConv2d(
             num_channels, kernel_size=1, padding=0)
@@ -102,10 +104,9 @@ class ResidualBottleNeck(nn.Module):
 
         self.conv_stem = None
         if use_stem:
-            # Bottleneck residual block 
+            # Bottleneck residual block
             self.conv_stem = nn.LazyConv2d(
                 num_channels, kernel_size=1, stride=strides)
-
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         shortcut = inputs
@@ -120,6 +121,7 @@ class ResidualBottleNeck(nn.Module):
         x += shortcut
         return self.relu(x)
 
+
 class StemConfig:
     '''
     convenience class to encapsulate configuration options
@@ -131,6 +133,17 @@ class StemConfig:
         self.kernel_size = kernel_size
         self.stride = stride
         self.padding = padding
+
+
+def generate_block(block_type: ResidualBlockType, num_channels: int, use_stem: bool = False,
+                   strides: int = 1, factor: int = 4):
+    """
+    Returns either a Residual Block or a ResidualBottleneck
+    """
+    if block_type == ResidualBlockType.BASIC:
+        return ResidualBlock(num_channels, use_stem=use_stem, strides=strides)
+    else:
+        return ResidualBottleNeck(num_channels, use_stem=use_stem, strides=strides, factor=factor)
 
 
 class ResNet(nn.Module):
