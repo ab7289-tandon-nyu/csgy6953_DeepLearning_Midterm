@@ -99,7 +99,6 @@ class ResNet(nn.Module):
         """
         x = self.stem(inputs)
         x = self.body(x)
-        print(f"x: {x.size()}")
         return self.classifier(x)
 
     def create_stem(self, num_channels: int = 64, kernel_size: int = 7, stride: int = 2, padding: int = 3) \
