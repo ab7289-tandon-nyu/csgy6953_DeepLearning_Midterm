@@ -99,6 +99,7 @@ class ResNet(nn.Module):
         """
         x = self.stem(inputs)
         x = self.body(x)
+        print(f"x: {x.size()}")
         return self.classifier(x)
 
     def create_stem(self, num_channels: int = 64, kernel_size: int = 7, stride: int = 2, padding: int = 3) \
@@ -119,7 +120,7 @@ class ResNet(nn.Module):
         Creates a sequential classifier head at the very 
         '''
         return nn.Sequential(
-            nn.AdaptiveAvgPool2d(1),
+            nn.AvgPool2d(4),
             nn.Flatten(),
             nn.LazyLinear(num_classes)
         )
