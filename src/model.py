@@ -9,7 +9,7 @@ class ResidualBlock(nn.Module):
     Class representing a convolutional residual block 
     '''
 
-    def __init__(self, num_channels: int, use_stem: bool = False, strides: int = 1, dropout: Optional[float] = None):
+    def __init__(self, num_channels: int, use_stem: bool = False, strides: int = 1, dropout: Optional[float] = None, kernel_size: int = 2):
         '''
         Creates a new instance of a Residual Block
         @param: num_channels (int) - the number of output channels for all convolutions in 
@@ -26,9 +26,9 @@ class ResidualBlock(nn.Module):
 
         self.dropout = nn.Dropout(dropout) if dropout is not None else None
         self.conv1 = nn.LazyConv2d(
-            num_channels, kernel_size=3, padding=1, stride=strides)
+            num_channels, kernel_size=kernel_size, padding=1, stride=strides)
         self.conv2 = nn.LazyConv2d(
-            num_channels, kernel_size=3, padding=1)
+            num_channels, kernel_size=kernel_size, padding=1)
         self.relu = nn.ReLU(inplace=True)
         self.out = nn.ReLU(inplace=True)
         self.bn1 = nn.LazyBatchNorm2d()
