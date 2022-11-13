@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from typing import Tuple
 
 # precondition: any lazy convolutional layers 
 # have been converted to normal convolution layers, 
@@ -22,7 +23,8 @@ def epoch_time(start_time, end_time):
     return elapsed_mins, elapsed_secs
 
 
-def count_parameters(model):
+def count_parameters(model: nn.Module) -> Tuple[int, int]:
+    '''Count total parameters and trainable parameters of a given model'''
     num_parameters = 0
     num_parameters_requiring_grad = 0
     for p in model.parameters():
