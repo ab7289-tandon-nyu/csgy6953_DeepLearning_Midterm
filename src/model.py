@@ -64,7 +64,7 @@ class ResidualBlock(nn.Module):
         return self.out(x)
 
 
-class ResidualBottleNeck(nn.Module):
+class BottleneckResidualBlock(nn.Module):
     '''
     Class representing a convolutional residual block with a bottleneck
     This class was built with reference to: 
@@ -143,7 +143,7 @@ def generate_block(block_type: ResidualBlockType, num_channels: int, use_stem: b
     if block_type == ResidualBlockType.BASIC:
         return ResidualBlock(num_channels, use_stem=use_stem, strides=strides)
     else:
-        return ResidualBottleNeck(num_channels, use_stem=use_stem, strides=strides, factor=factor)
+        return BottleneckResidualBlock(num_channels, use_stem=use_stem, strides=strides, factor=factor)
 
 
 class ResNet(nn.Module):
