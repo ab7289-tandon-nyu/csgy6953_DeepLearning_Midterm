@@ -210,7 +210,8 @@ class ResNet(nn.Module):
             nn.ReLU(inplace=True),
         )
 
-    def create_classifier(self, num_classes: int) -> nn.Sequential:
+    def create_classifier(self,
+                          num_classes: int, use_bias: bool = False) -> nn.Sequential:
         """
         Creates a sequential classifier head at the very 
         """
