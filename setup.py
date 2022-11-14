@@ -16,7 +16,8 @@ test_dependencies = [
     "isort",
     "coverage",
     "coveralls",
-    "tox"
+    "tox",
+    "torch"
 ]
 
 setup(
