@@ -6,21 +6,20 @@ from typing import List, Tuple, Optional
 
 
 class ResidualBlockType(Enum):
-    '''
+    """
     Enum class to represent the residual block type for ResNet
-    '''
+    """
     BASIC = 0
     BOTTLENECK = 1
 
 
 class ResidualBlock(nn.Module):
-    '''
+    """
     Class representing a convolutional residual block 
-    '''
+    """
 
-    def __init__(self, num_channels: int, use_stem: bool = False, strides: int = 1,
-        dropout: Optional[float] = None, use_bias: bool = False):
-        '''
+    def __init__(self, num_channels: int, use_stem: bool = False, strides: int = 1,dropout: Optional[float] = None, use_bias: bool = False):
+        """
         Creates a new instance of a Residual Block
         @param: num_channels (int) - the number of output channels for all convolutions in 
             the block
@@ -28,7 +27,7 @@ class ResidualBlock(nn.Module):
             residual
         @param: strides (int) - the number of strides to use in the convolutions, defaults to 1
         @param: dropout (float) - if present, adds a dropout between the hidden layers
-        '''
+        """
         super().__init__()
         self.num_channels = num_channels
         self.use_stem = use_stem
@@ -65,39 +64,42 @@ class ResidualBlock(nn.Module):
 
 
 class BottleneckResidualBlock(nn.Module):
-    '''
+    """
     Class representing a convolutional residual block with a bottleneck
     This class was built with reference to: 
     https://github.com/kuangliu/pytorch-cifar/blob/master/models/resnet.py
-    '''
+    """
 
-    def __init__(self, num_channels: int, use_stem: bool = False, strides: int = 1, factor: int = 4):
-        '''
+    def __init__(self, num_channels: int, use_stem: bool = False, strides: int = 1, factor: int = 4, dropout: Optional[float] = None, use_bias: bool = False):
+        """
         Creates a new instance of a Residual BottleNeck Block
         @param: num_channels (int) - the number of output channels for all convolutions in the block
         @param: use_stem (bool) - whether a 1x1 convolution is needed to downsample the residual
         @param: strides (int) - the number of strides to use in the convolutions, defaults to 1
         @param: factor (int) - the factor by which the input channels will be reduced for the bottleneck
-        '''
+        @param: dropout (float) - if present, adds a dropout between the hidden layers
+        """
         super().__init__()
         self.num_channels = num_channels
         self.use_stem = use_stem
         self.strides = strides
         self.factor = factor
+        self.dropout1 = nn.Dropout(dropout) if dropout is not None else None
+        self.dropout2 = nn.Dropout(dropout) if dropout is not None else None
 
         # First convolutional layer with normalization
         self.conv1 = nn.LazyConv2d(
-            num_channels//factor, kernel_size=1, padding=0)
+            num_channels//factor, kernel_size=1, padding=0, bias=use_bias)
         self.bn1 = nn.LazyBatchNorm2d()
 
         # Second convolutional layer with normalization
         self.conv2 = nn.LazyConv2d(
-            num_channels//factor, kernel_size=3, padding=1, stride=strides)
+            num_channels//factor, kernel_size=3, padding=1, stride=strides, bias=use_bias)
         self.bn2 = nn.LazyBatchNorm2d()
 
         # Third convolutional layer with normalization
         self.conv3 = nn.LazyConv2d(
-            num_channels, kernel_size=1, padding=0)
+            num_channels, kernel_size=1, padding=0, bias=use_bias)
         self.bn3 = nn.LazyBatchNorm2d()
 
         self.relu = nn.ReLU(inplace=True)
@@ -106,12 +108,16 @@ class BottleneckResidualBlock(nn.Module):
         if use_stem:
             # Bottleneck residual block
             self.conv_stem = nn.LazyConv2d(
-                num_channels, kernel_size=1, stride=strides)
+                num_channels, kernel_size=1, stride=strides, bias=use_bias)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         shortcut = inputs
         x = self.relu(self.bn1(self.conv1(inputs)))
+        if self.dropout1 is not None:
+            x = self.dropout1(x)
         x = self.relu(self.bn2(self.conv2(x)))
+        if self.dropout2 is not None:
+            x = self.dropout2(x)
         x = self.bn3(self.conv3(x))
         if self.use_stem:
             # downsample skip connection
@@ -123,10 +129,10 @@ class BottleneckResidualBlock(nn.Module):
 
 
 class StemConfig:
-    '''
+    """
     convenience class to encapsulate configuration options
     for the ResNet stem
-    '''
+    """
 
     def __init__(self, num_channels, kernel_size, stride, padding):
         self.num_channels = num_channels
@@ -136,26 +142,26 @@ class StemConfig:
 
 
 def generate_block(block_type: ResidualBlockType, num_channels: int, use_stem: bool = False,
-                   strides: int = 1, factor: int = 4):
+                   strides: int = 1, factor: int = 4, dropout: Optional[float] = None,  use_bias: bool = False):
     """
     Returns either a Residual Block or a ResidualBottleneck
     """
     if block_type == ResidualBlockType.BASIC:
-        return ResidualBlock(num_channels, use_stem=use_stem, strides=strides)
+        return ResidualBlock(num_channels, use_stem=use_stem, strides=strides, dropout=dropout, use_bias=use_bias)
     else:
-        return BottleneckResidualBlock(num_channels, use_stem=use_stem, strides=strides, factor=factor)
+        return BottleneckResidualBlock(num_channels, use_stem=use_stem, strides=strides, factor=factor, dropout=dropout, use_bias=use_bias)
 
 
 class ResNet(nn.Module):
-    '''
+    """
     Class representing a full ResNet model
-    '''
+    """
 
     def __init__(self, architecture: List[Tuple[ResidualBlockType, int, int, float]], stem_config: Optional[StemConfig],
         output_size: int = 10, use_bias: bool = False, *args, **kwargs):
-        '''
+        """
         returns an instance of a ResNet
-        '''
+        """
         super().__init__()
         self.use_bias = use_bias
         if stem_config is not None:
@@ -200,24 +206,26 @@ class ResNet(nn.Module):
         )
 
     def create_classifier(self, num_classes: int) -> nn.Sequential:
-        '''
+        """
         Creates a sequential classifier head at the very 
-        '''
+        """
         return nn.Sequential(
             nn.AdaptiveAvgPool2d(1),
             nn.Flatten(),
             nn.LazyLinear(num_classes)
         )
 
-    def create_block(self, num_residuals: int, num_channels: int, dropout: float,
+    def create_block(self, block_type: ResidualBlockType, num_residuals: int, num_channels: int, dropout: Optional[float] = None,
         first_block: bool = False, use_bias: bool = False) -> nn.Sequential:
+        """
+        Given our inputs, generates either a ResidualBlock or ResidualBottleNeck and addes it to our
+        sequence of layers
+        """
         layer = []
         for i in range(num_residuals):
             if i == 0 and not first_block:
-                layer.append(ResidualBlock(
-                    num_channels, dropout=dropout, use_stem=True, strides=2,
-                    use_bias = use_bias))
+                layer.append(generate_block(
+                    block_type, num_channels, use_stem=True, strides=2, dropout=dropout, use_bias=use_bias))
             else:
-                layer.append(ResidualBlock(num_channels, dropout=dropout, 
-                use_bias = use_bias))
+                layer.append(generate_block(block_type, num_channels, dropout=dropout, use_bias=use_bias))
         return nn.Sequential(*layer)
