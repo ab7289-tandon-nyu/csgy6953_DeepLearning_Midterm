@@ -18,7 +18,8 @@ class ResidualBlock(nn.Module):
     Class representing a convolutional residual block 
     """
 
-    def __init__(self, num_channels: int, use_stem: bool = False, strides: int = 1,dropout: Optional[float] = None, use_bias: bool = False):
+    def __init__(self,
+                 num_channels: int, use_stem: bool = False, strides: int = 1, dropout: Optional[float] = None, use_bias: bool = False):
         """
         Creates a new instance of a Residual Block
         @param: num_channels (int) - the number of output channels for all convolutions in 
@@ -70,7 +71,8 @@ class BottleneckResidualBlock(nn.Module):
     https://github.com/kuangliu/pytorch-cifar/blob/master/models/resnet.py
     """
 
-    def __init__(self, num_channels: int, use_stem: bool = False, strides: int = 1, factor: int = 4, dropout: Optional[float] = None, use_bias: bool = False):
+    def __init__(self,
+                 num_channels: int, use_stem: bool = False, strides: int = 1, factor: int = 4, dropout: Optional[float] = None, use_bias: bool = False):
         """
         Creates a new instance of a Residual BottleNeck Block
         @param: num_channels (int) - the number of output channels for all convolutions in the block
@@ -141,7 +143,8 @@ class StemConfig:
         self.padding = padding
 
 
-def generate_block(block_type: ResidualBlockType, num_channels: int, use_stem: bool = False,
+def generate_block(block_type: ResidualBlockType,
+                   num_channels: int, use_stem: bool = False,
                    strides: int = 1, factor: int = 4, dropout: Optional[float] = None,  use_bias: bool = False):
     """
     Returns either a Residual Block or a ResidualBottleneck
@@ -157,8 +160,9 @@ class ResNet(nn.Module):
     Class representing a full ResNet model
     """
 
-    def __init__(self, architecture: List[Tuple[ResidualBlockType, int, int, float]], stem_config: Optional[StemConfig],
-        output_size: int = 10, use_bias: bool = False, *args, **kwargs):
+    def __init__(self,
+                 architecture: List[Tuple[ResidualBlockType, int, int, float]], stem_config: Optional[StemConfig],
+                 output_size: int = 10, use_bias: bool = False, *args, **kwargs):
         """
         returns an instance of a ResNet
         """
@@ -170,11 +174,12 @@ class ResNet(nn.Module):
                 stem_config.kernel_size,
                 stem_config.stride,
                 stem_config.padding,
-                use_bias = use_bias
+                use_bias=use_bias
             )
         else:
-            self.stem = self.create_stem(use_bias = use_bias)
-        self.classifier = self.create_classifier(output_size, use_bias = use_bias)
+            self.stem = self.create_stem(use_bias=use_bias)
+        self.classifier = self.create_classifier(
+            output_size, use_bias=use_bias)
 
         self.body = nn.Sequential()
         for idx, block_def in enumerate(architecture):
@@ -183,7 +188,7 @@ class ResNet(nn.Module):
                 self.create_block(
                     *block_def,
                     first_block=(idx == 0),
-                    use_bias = use_bias))
+                    use_bias=use_bias))
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         """
@@ -193,8 +198,8 @@ class ResNet(nn.Module):
         x = self.body(x)
         return self.classifier(x)
 
-    def create_stem(self, num_channels: int = 64, kernel_size: int = 7, stride: int = 2,
-        padding: int = 3, use_bias: bool = False) -> nn.Sequential:
+    def create_stem(self,
+                    num_channels: int = 64, kernel_size: int = 7, stride: int = 2, padding: int = 3, use_bias: bool = False) -> nn.Sequential:
         """
         Creates a sequential stem as the first component of the model
         """
@@ -215,8 +220,8 @@ class ResNet(nn.Module):
             nn.LazyLinear(num_classes)
         )
 
-    def create_block(self, block_type: ResidualBlockType, num_residuals: int, num_channels: int, dropout: Optional[float] = None,
-        first_block: bool = False, use_bias: bool = False) -> nn.Sequential:
+    def create_block(self,
+                     block_type: ResidualBlockType, num_residuals: int, num_channels: int, dropout: Optional[float] = None, first_block: bool = False, use_bias: bool = False) -> nn.Sequential:
         """
         Given our inputs, generates either a ResidualBlock or ResidualBottleNeck and addes it to our
         sequence of layers
@@ -227,5 +232,6 @@ class ResNet(nn.Module):
                 layer.append(generate_block(
                     block_type, num_channels, use_stem=True, strides=2, dropout=dropout, use_bias=use_bias))
             else:
-                layer.append(generate_block(block_type, num_channels, dropout=dropout, use_bias=use_bias))
+                layer.append(generate_block(block_type, num_channels,
+                             dropout=dropout, use_bias=use_bias))
         return nn.Sequential(*layer)
