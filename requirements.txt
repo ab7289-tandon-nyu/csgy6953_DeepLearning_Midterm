@@ -10,3 +10,11 @@ scipy
 jupyter
 notebook
 torch-summary
+
+# test dependencies
+pytest
+flake8
+black
+isort
+coverage
+coveralls
