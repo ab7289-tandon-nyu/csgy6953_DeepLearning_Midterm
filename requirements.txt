@@ -10,3 +10,10 @@ scipy
 jupyter
 notebook
 torch-summary
+
+# test dependencies
+pytest
+pytest-cov
+black
+isort
+tox

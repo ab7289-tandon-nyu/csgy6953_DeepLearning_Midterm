@@ -1,17 +1,19 @@
-import torch
-from torch import nn
 from typing import Tuple
 
-# precondition: any lazy convolutional layers 
-# have been converted to normal convolution layers, 
-# for example by passing a dummy input tensor through the model 
+import torch
+from torch import nn
+
+
+# precondition: any lazy convolutional layers
+# have been converted to normal convolution layers,
+# for example by passing a dummy input tensor through the model
 def initialize_parameters(m: nn.Module) -> None:
     if isinstance(m, nn.Conv2d):
-        nn.init.kaiming_normal_(m.weight.data, nonlinearity = 'relu')
+        nn.init.kaiming_normal_(m.weight.data, nonlinearity="relu")
         if m.bias is not None:
             nn.init.constant_(m.bias.data, 0)
     elif isinstance(m, nn.Linear):
-        nn.init.xavier_normal_(m.weight.data, gain = nn.init.calculate_gain('relu'))
+        nn.init.xavier_normal_(m.weight.data, gain=nn.init.calculate_gain("relu"))
         if m.bias is not None:
             nn.init.constant_(m.bias.data, 0)
 
@@ -24,7 +26,7 @@ def epoch_time(start_time, end_time):
 
 
 def count_parameters(model: nn.Module) -> Tuple[int, int]:
-    '''Count total parameters and trainable parameters of a given model'''
+    """Count total parameters and trainable parameters of a given model"""
     num_parameters = 0
     num_parameters_requiring_grad = 0
     for p in model.parameters():
