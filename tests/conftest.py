@@ -3,7 +3,7 @@ from typing import Iterable, Optional
 import pytest
 import torch
 
-from src.model import StemConfig
+from src.model import StemConfig, ResidualBlockType
 
 
 def check_conv_bias(iter: Iterable, use_bias: bool):
@@ -38,10 +38,10 @@ def base_stem_config():
 @pytest.fixture
 def base_architecture_dropout():
     arch = [
-        (1, 64, 0.5),
-        (1, 128, 0.5),
-        (1, 256, 0.5),
-        (1, 512, 0.5),
+        (ResidualBlockType.BASIC ,1, 64, 0.5),
+        (ResidualBlockType.BASIC, 1, 128, 0.5),
+        (ResidualBlockType.BASIC, 1, 256, 0.5),
+        (ResidualBlockType.BASIC, 1, 512, 0.5),
     ]
     return arch
 
@@ -49,9 +49,9 @@ def base_architecture_dropout():
 @pytest.fixture
 def base_architecture():
     arch = [
-        (1, 64),
-        (1, 128),
-        (1, 256),
-        (1, 512),
+        (ResidualBlockType.BASIC, 1, 64),
+        (ResidualBlockType.BASIC, 1, 128),
+        (ResidualBlockType.BASIC, 1, 256),
+        (ResidualBlockType.BASIC, 1, 512),
     ]
     return arch
