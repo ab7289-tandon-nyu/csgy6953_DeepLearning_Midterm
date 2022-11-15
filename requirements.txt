@@ -14,9 +14,6 @@ torch-summary
 # test dependencies
 pytest
 pytest-cov
-flake8
 black
 isort
-coverage
-coveralls
 tox
