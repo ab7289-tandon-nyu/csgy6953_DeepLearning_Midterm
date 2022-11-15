@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from src.model import ResidualBlock, ResNet, StemConfig
+from src.model import BottleneckResidualBlock, ResidualBlock, ResNet, StemConfig
 
 from .conftest import check_conv_bias, check_dropout
 
@@ -111,6 +111,77 @@ def test_residualblock_bad_inputs():
     inputs = torch.ones((1, 3, 4, 4))
     with pytest.raises(RuntimeError):
         _ = block(inputs)
+
+
+def test_bottleneck_init():
+
+    test_num_channels = 128
+
+    block = BottleneckResidualBlock(test_num_channels)
+
+    assert block.num_channels == test_num_channels
+    assert block.use_stem == False
+    assert block.strides == 1
+    assert block.factor == 4
+    assert block.dropout1 is None
+    assert block.dropout2 is None
+    assert check_conv_bias(block.parameters(), False)
+    assert check_dropout(block.parameters())
+
+
+def test_bottlneck_init_with_extras():
+
+    test_num_channels = 128
+    test_use_stem = True
+    test_strides = 2
+    test_factor = 2
+    test_dropout = 0.25
+    test_bias = True
+
+    block = BottleneckResidualBlock(
+        test_num_channels,
+        use_stem=test_use_stem,
+        strides=test_strides,
+        factor=test_factor,
+        dropout=test_dropout,
+        use_bias=test_bias,
+    )
+
+    assert block.num_channels == test_num_channels
+    assert block.use_stem == test_use_stem
+    assert block.strides == test_strides
+    assert block.factor == test_factor
+    assert block.dropout1 is not None
+    assert block.dropout2 is not None
+    assert check_conv_bias(block.parameters(), True)
+    assert check_dropout(block.parameters(), test_dropout)
+
+
+def test_bottleneck_forward():
+    test_num_channels = 128
+
+    block = BottleneckResidualBlock(test_num_channels)
+
+    test_input = torch.ones((1, 128, 4, 4))
+    outputs = block(test_input)
+    assert outputs is not None
+    assert outputs.size() == (1, 128, 4, 4)
+
+
+def test_bottleneck_forward_downsample():
+
+    test_num_channels = 128
+    test_stride = 2
+    test_use_stem = True
+
+    block = BottleneckResidualBlock(
+        test_num_channels, use_stem=test_use_stem, strides=test_stride
+    )
+
+    test_input = torch.ones((1, 128, 4, 4))
+    outputs = block(test_input)
+    assert outputs is not None
+    assert outputs.size() == (1, 128, 2, 2)
 
 
 def test_resnet_init(base_stem_config, base_architecture):
