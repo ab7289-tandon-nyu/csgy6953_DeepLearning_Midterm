@@ -1,8 +1,8 @@
+from enum import Enum
 from typing import List, Optional, Tuple
 
 import torch
 import torch.nn as nn
-from enum import Enum
 
 
 class ResidualBlockType(Enum):

@@ -3,7 +3,7 @@ from typing import Iterable, Optional
 import pytest
 import torch
 
-from src.model import StemConfig, ResidualBlockType
+from src.model import ResidualBlockType, StemConfig
 
 
 def check_conv_bias(iter: Iterable, use_bias: bool):
