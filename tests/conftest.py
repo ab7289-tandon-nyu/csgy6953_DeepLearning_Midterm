@@ -38,7 +38,7 @@ def base_stem_config():
 @pytest.fixture
 def base_architecture_dropout():
     arch = [
-        (ResidualBlockType.BASIC ,1, 64, 0.5),
+        (ResidualBlockType.BASIC, 1, 64, 0.5),
         (ResidualBlockType.BASIC, 1, 128, 0.5),
         (ResidualBlockType.BASIC, 1, 256, 0.5),
         (ResidualBlockType.BASIC, 1, 512, 0.5),
