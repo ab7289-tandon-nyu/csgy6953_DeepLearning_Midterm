@@ -10,3 +10,5 @@ scipy
 jupyter
 notebook
 torch-summary
+
+tox
