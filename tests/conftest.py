@@ -16,6 +16,7 @@ def check_conv_bias(iter: Iterable, use_bias: bool):
             return False
     return True
 
+
 def check_dropout(iter: Iterable, dropout: Optional[float] = None):
     """
     Checks to see if the passed in model has the designated dropout
@@ -28,13 +29,9 @@ def check_dropout(iter: Iterable, dropout: Optional[float] = None):
     return True
 
 
-
 @pytest.fixture
 def base_stem_config():
-    stem = StemConfig(64,
-        kernel_size = 3,
-        stride = 1,
-        padding = 1)
+    stem = StemConfig(64, kernel_size=3, stride=1, padding=1)
     return stem
 
 
@@ -58,4 +55,3 @@ def base_architecture():
         (1, 512),
     ]
     return arch
-        

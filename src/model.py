@@ -22,7 +22,7 @@ class ResidualBlock(nn.Module):
                  num_channels: int, use_stem: bool = False, strides: int = 1, dropout: Optional[float] = None, use_bias: bool = False):
         """
         Creates a new instance of a Residual Block
-        @param: num_channels (int) - the number of output channels for all convolutions in 
+        @param: num_channels (int) - the number of output channels for all convolutions in
             the block
         @param: use_stem (bool) - whether a 1x1 convolution is needed to downsample the
             residual
@@ -36,9 +36,11 @@ class ResidualBlock(nn.Module):
 
         self.dropout = nn.Dropout(dropout) if dropout is not None else None
         self.conv1 = nn.LazyConv2d(
-            num_channels, kernel_size=3, padding=1, stride=strides, bias=use_bias)
+            num_channels, kernel_size=3, padding=1, stride=strides, bias=use_bias
+        )
         self.conv2 = nn.LazyConv2d(
-            num_channels, kernel_size=3, padding=1, bias=use_bias)
+            num_channels, kernel_size=3, padding=1, bias=use_bias
+        )
         self.relu = nn.ReLU(inplace=True)
         self.out = nn.ReLU(inplace=True)
         self.bn1 = nn.LazyBatchNorm2d()
@@ -47,7 +49,8 @@ class ResidualBlock(nn.Module):
         self.conv_stem = None
         if use_stem:
             self.conv_stem = nn.LazyConv2d(
-                num_channels, kernel_size=1, stride=strides, bias=use_bias)
+                num_channels, kernel_size=1, stride=strides, bias=use_bias
+            )
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         shortcut = inputs
@@ -204,8 +207,13 @@ class ResNet(nn.Module):
         Creates a sequential stem as the first component of the model
         """
         return nn.Sequential(
-            nn.LazyConv2d(num_channels, kernel_size=kernel_size,
-                          padding=padding, stride=stride, bias=use_bias),
+            nn.LazyConv2d(
+                num_channels,
+                kernel_size=kernel_size,
+                padding=padding,
+                stride=stride,
+                bias=use_bias,
+            ),
             nn.LazyBatchNorm2d(),
             nn.ReLU(inplace=True),
         )
@@ -216,9 +224,7 @@ class ResNet(nn.Module):
         Creates a sequential classifier head at the very 
         """
         return nn.Sequential(
-            nn.AdaptiveAvgPool2d(1),
-            nn.Flatten(),
-            nn.LazyLinear(num_classes)
+            nn.AdaptiveAvgPool2d(1), nn.Flatten(), nn.LazyLinear(num_classes)
         )
 
     def create_block(self,
