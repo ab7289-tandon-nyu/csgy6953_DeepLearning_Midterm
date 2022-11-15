@@ -1,8 +1,8 @@
+from typing import Tuple
+
 import torch
 import torchvision.transforms as transforms
 from torchvision.transforms import autoaugment
-
-from typing import Tuple
 
 
 def make_transforms(means: torch.Tensor, std_devs: torch.Tensor) -> Tuple:

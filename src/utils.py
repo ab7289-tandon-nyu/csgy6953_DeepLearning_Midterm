@@ -1,6 +1,8 @@
+from typing import Tuple
+
 import torch
 from torch import nn
-from typing import Tuple
+
 
 # precondition: any lazy convolutional layers
 # have been converted to normal convolution layers,

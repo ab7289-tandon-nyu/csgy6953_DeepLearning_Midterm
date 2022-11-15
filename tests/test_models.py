@@ -1,7 +1,8 @@
 import pytest
 import torch
 
-from src.model import ResNet, ResidualBlock, StemConfig
+from src.model import ResidualBlock, ResNet, StemConfig
+
 from .conftest import check_conv_bias, check_dropout
 
 

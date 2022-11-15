@@ -1,8 +1,9 @@
-import torchvision.datasets as datasets
-import torch.utils.data as data
-import torch
 import copy
-from typing import Tuple, Callable
+from typing import Callable, Tuple
+
+import torch
+import torch.utils.data as data
+import torchvision.datasets as datasets
 
 
 ## 2. Prepare to normalize data (the same way for TRAIN and TEST)

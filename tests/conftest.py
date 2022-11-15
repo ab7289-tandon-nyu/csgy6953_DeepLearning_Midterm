@@ -1,9 +1,9 @@
+from typing import Iterable, Optional
+
 import pytest
 import torch
 
 from src.model import StemConfig
-
-from typing import Iterable, Optional
 
 
 def check_conv_bias(iter: Iterable, use_bias: bool):
