@@ -72,8 +72,29 @@ def generate_layer(
                         bias=use_bias
                         )
                     }
-                
-
+            
+            # partial solution 1:
+            # fatal issue: when input is [256,1,1], MUST pad in order to apply 2x2 kernel
+            if kernel_size == 2:
+                layer_locator = {
+                    LayerLoc.MAIN_BLOCK_CONV1: nn.LazyConv2d(
+                        num_channels,
+                        kernel_size=2, padding=1, # ResidualBlock.conv1
+                        stride=strides, bias=use_bias
+                        ), 
+                     LayerLoc.MAIN_BLOCK_CONV2: nn.LazyConv2d(
+                        num_channels,
+                        kernel_size=2, padding=0, # ResidualBlock.conv2
+                        bias=use_bias
+                        ),
+                     LayerLoc.SHORTCUT_IDENTITY: nn.Identity(),
+                     LayerLoc.SHORTCUT_CONV_STEM: nn.LazyConv2d(
+                        num_channels, 
+                        kernel_size=1, stride=strides, # ResidualBlock.conv_stem
+                        bias=use_bias
+                        )
+                    }
+            
     if block_type == ResidualBlockType.BOTTLENECK:
         if layer_type == LayerType.CONV:
 
