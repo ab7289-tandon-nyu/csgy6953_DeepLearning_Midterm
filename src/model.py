@@ -41,9 +41,9 @@ def generate_layer(
     block_type: ResidualBlockType,
     layer_type: LayerType, 
     layer_loc: LayerLoc, # position of this layer within the block starting from index 1 
-    kernel_size: int,
     num_channels: int,
-    strides: int,
+    main_block_kernel_size: int,
+    strides: int = 1,
     factor: int = 4,
     use_bias: bool = False,
 ):
@@ -53,7 +53,7 @@ def generate_layer(
     if block_type == ResidualBlockType.BASIC:
         if layer_type == LayerType.CONV:
 
-            if kernel_size == 3:
+            if main_block_kernel_size == 3:
                 layer_locator = {
                     LayerLoc.MAIN_BLOCK_CONV1: nn.LazyConv2d(
                         num_channels,
@@ -75,7 +75,7 @@ def generate_layer(
             
             # partial solution 1:
             # fatal issue: when input is [256,1,1], MUST pad in order to apply 2x2 kernel
-            if kernel_size == 2:
+            if main_block_kernel_size == 2:
                 layer_locator = {
                     LayerLoc.MAIN_BLOCK_CONV1: nn.LazyConv2d(
                         num_channels,
@@ -98,7 +98,7 @@ def generate_layer(
     if block_type == ResidualBlockType.BOTTLENECK:
         if layer_type == LayerType.CONV:
 
-            if kernel_size == 3:
+            if main_block_kernel_size == 3:
                 layer_locator = {
                     LayerLoc.MAIN_BLOCK_CONV1: nn.LazyConv2d(
                         num_channels // factor,
@@ -137,6 +137,7 @@ class ResidualBlock(nn.Module):
         strides: int = 1,
         dropout: Optional[float] = None,
         use_bias: bool = False,
+        main_block_kernel_size: int = 3
     ):
         """
         Creates a new instance of a Residual Block
@@ -153,32 +154,60 @@ class ResidualBlock(nn.Module):
         self.strides = strides
 
         self.dropout = nn.Dropout(dropout) if dropout is not None else None
-        self.conv1 = nn.LazyConv2d(
-            num_channels, kernel_size=3, padding=1, stride=strides, bias=use_bias
+        self.conv1 = generate_layer(
+            block_type = ResidualBlockType.BASIC,
+            layer_type = LayerType.CONV,
+            layer_loc = LayerLoc.MAIN_BLOCK_CONV1,
+            num_channels = num_channels,
+            main_block_kernel_size = main_block_kernel_size,
+            stride = strides,
+            use_bias = use_bias,
         )
-        self.conv2 = nn.LazyConv2d(
-            num_channels, kernel_size=3, padding=1, bias=use_bias
+        self.conv2 = generate_layer(
+            lock_type = ResidualBlockType.BASIC,
+            layer_type = LayerType.CONV,
+            layer_loc = LayerLoc.MAIN_BLOCK_CONV2,
+            num_channels = num_channels,
+            main_block_kernel_size = main_block_kernel_size,
+            use_bias = use_bias,
         )
         self.relu = nn.ReLU(inplace=True)
         self.out = nn.ReLU(inplace=True)
         self.bn1 = nn.LazyBatchNorm2d()
         self.bn2 = nn.LazyBatchNorm2d()
 
+        self.identity = None
         self.conv_stem = None
         if use_stem:
-            self.conv_stem = nn.LazyConv2d(
-                num_channels, kernel_size=1, stride=strides, bias=use_bias
+            self.conv_stem = generate_layer(
+                block_type = ResidualBlockType.BASIC,
+                layer_type = LayerType.CONV,
+                layer_loc = LayerLoc.SHORTCUT_CONV_STEM,
+                num_channels = num_channels, 
+                main_block_kernel_size = main_block_kernel_size,
+                stride = strides,
+                use_bias = use_bias
+            )
+        else:
+            self.identity = generate_layer(
+                block_type = ResidualBlockType.BASIC,
+                layer_type = LayerType.CONV,
+                layer_loc = LayerLoc.SHORTCUT_IDENTITY,
             )
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         shortcut = inputs
+
         x = self.relu(self.bn1(self.conv1(inputs)))
         if self.dropout is not None:
             x = self.dropout(x)
         x = self.bn2(self.conv2(x))
+        
         if self.use_stem:
             # downsample skip connection
             shortcut = self.conv_stem(shortcut)
+        else:
+            shortcut = self.identity(shortcut)
 
         # add in skip connection
         x += shortcut
