@@ -164,7 +164,7 @@ class ResidualBlock(nn.Module):
             use_bias = use_bias,
         )
         self.conv2 = generate_layer(
-            lock_type = ResidualBlockType.BASIC,
+            block_type = ResidualBlockType.BASIC,
             layer_type = LayerType.CONV,
             layer_loc = LayerLoc.MAIN_BLOCK_CONV2,
             num_channels = num_channels,
@@ -193,6 +193,8 @@ class ResidualBlock(nn.Module):
                 block_type = ResidualBlockType.BASIC,
                 layer_type = LayerType.CONV,
                 layer_loc = LayerLoc.SHORTCUT_IDENTITY,
+                num_channels = num_channels,
+                main_block_kernel_size = main_block_kernel_size
             )
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
