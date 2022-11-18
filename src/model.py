@@ -160,7 +160,7 @@ class ResidualBlock(nn.Module):
             layer_loc = LayerLoc.MAIN_BLOCK_CONV1,
             num_channels = num_channels,
             main_block_kernel_size = main_block_kernel_size,
-            stride = strides,
+            strides = strides,
             use_bias = use_bias,
         )
         self.conv2 = generate_layer(
@@ -185,7 +185,7 @@ class ResidualBlock(nn.Module):
                 layer_loc = LayerLoc.SHORTCUT_CONV_STEM,
                 num_channels = num_channels, 
                 main_block_kernel_size = main_block_kernel_size,
-                stride = strides,
+                strides = strides,
                 use_bias = use_bias
             )
         else:
