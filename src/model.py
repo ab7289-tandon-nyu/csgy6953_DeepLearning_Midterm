@@ -318,6 +318,7 @@ def generate_block(
     factor: int = 4,
     dropout: Optional[float] = None,
     use_bias: bool = False,
+    main_block_kernel_size: int = 3
 ):
     """
     Returns either a Residual Block or a ResidualBottleneck
@@ -329,6 +330,7 @@ def generate_block(
             strides=strides,
             dropout=dropout,
             use_bias=use_bias,
+            main_block_kernel_size=main_block_kernel_size
         )
     else:
         return BottleneckResidualBlock(
@@ -338,6 +340,7 @@ def generate_block(
             factor=factor,
             dropout=dropout,
             use_bias=use_bias,
+            main_block_kernel_size=main_block_kernel_size
         )
 
 
@@ -348,7 +351,7 @@ class ResNet(nn.Module):
 
     def __init__(
         self,
-        architecture: List[Tuple[ResidualBlockType, int, int, float]],
+        architecture: List[Tuple[ResidualBlockType, int, int, float, int]],
         stem_config: Optional[StemConfig],
         output_size: int = 10,
         use_bias: bool = False,
@@ -428,6 +431,7 @@ class ResNet(nn.Module):
         num_residuals: int,
         num_channels: int,
         dropout: Optional[float] = None,
+        main_block_kernel_size: int = 3,
         first_block: bool = False,
         use_bias: bool = False,
     ) -> nn.Sequential:
@@ -446,12 +450,14 @@ class ResNet(nn.Module):
                         strides=2,
                         dropout=dropout,
                         use_bias=use_bias,
+                        main_block_kernel_size=main_block_kernel_size
                     )
                 )
             else:
                 layer.append(
                     generate_block(
-                        block_type, num_channels, dropout=dropout, use_bias=use_bias
+                        block_type, num_channels, dropout=dropout, use_bias=use_bias, 
+                        main_block_kernel_size=main_block_kernel_size
                     )
                 )
         return nn.Sequential(*layer)
