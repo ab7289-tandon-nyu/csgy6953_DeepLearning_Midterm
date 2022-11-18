@@ -14,6 +14,96 @@ class ResidualBlockType(Enum):
     BOTTLENECK = 1
 
 
+class LayerType(Enum):
+    """
+    Enum class to represent layer within for ResidualBlock and for BottleneckResidualBlock
+    """
+
+    # Disambiguation: here "layer" refers to the individual layer within a block,
+    # not a "residual layer" containing one or more blocks
+    CONV = 0
+
+
+class LayerLoc(Enum):
+    """
+    Enum class to represent a layer's location within a block
+    """
+
+    MAIN_BLOCK_CONV1 = 0
+    MAIN_BLOCK_CONV2 = 1
+    MAIN_BLOCK_CONV3 = 2
+
+    SHORTCUT_IDENTITY = 6   # identity
+    SHORTCUT_CONV_STEM = 7
+
+
+def generate_layer(
+    block_type: ResidualBlockType,
+    layer_type: LayerType, 
+    layer_loc: LayerLoc, # position of this layer within the block starting from index 1 
+    kernel_size: int,
+    num_channels: int,
+    strides: int,
+    factor: int = 4,
+    use_bias: bool = False,
+):
+    """
+    Returns a layer with the most appropriate parameters such as padding 
+    """
+    if block_type == ResidualBlockType.BASIC:
+        if layer_type == LayerType.CONV:
+
+            if kernel_size == 3:
+                layer_locator = {
+                    LayerLoc.MAIN_BLOCK_CONV1: nn.LazyConv2d(
+                        num_channels,
+                        kernel_size=3, padding=1, # ResidualBlock.conv1
+                        stride=strides, bias=use_bias
+                        ), 
+                     LayerLoc.MAIN_BLOCK_CONV2: nn.LazyConv2d(
+                        num_channels,
+                        kernel_size=3, padding=1, # ResidualBlock.conv2
+                        bias=use_bias
+                        ),
+                     LayerLoc.SHORTCUT_IDENTITY: nn.Identity(),
+                     LayerLoc.SHORTCUT_CONV_STEM: nn.LazyConv2d(
+                        num_channels, 
+                        kernel_size=1, stride=strides, # ResidualBlock.conv_stem
+                        bias=use_bias
+                        )
+                    }
+                
+
+    if block_type == ResidualBlockType.BOTTLENECK:
+        if layer_type == LayerType.CONV:
+
+            if kernel_size == 3:
+                layer_locator = {
+                    LayerLoc.MAIN_BLOCK_CONV1: nn.LazyConv2d(
+                        num_channels // factor,
+                        kernel_size=1, padding=0, # BottleneckResidualBlock.conv1
+                        bias=use_bias
+                        ), 
+                    LayerLoc.MAIN_BLOCK_CONV2: nn.LazyConv2d(
+                        num_channels // factor,
+                        kernel_size=3, padding=1, stride=strides, # BottleneckResidualBlock.conv2
+                        bias=use_bias
+                        ),
+                    LayerLoc.MAIN_BLOCK_CONV3: nn.LazyConv2d(
+                        num_channels, 
+                        kernel_size=1, padding=0, # BottleneckResidualBlock.conv3
+                        bias=use_bias
+                        ),
+                    LayerLoc.SHORTCUT_IDENTITY: nn.Identity(),
+                    LayerLoc.SHORTCUT_CONV_STEM: nn.LazyConv2d(
+                        num_channels, 
+                        kernel_size=1, stride=strides, # BottleneckResidualBlock.conv_stem
+                        bias=use_bias
+                        )
+                    }
+    return layer_locator[layer_loc]
+    
+
 class ResidualBlock(nn.Module):
     """
     Class representing a convolutional residual block
