@@ -73,19 +73,50 @@ def generate_layer(
                         )
                     }
             
-            # partial solution 1:
-            # fatal issue: when input is [256,1,1], MUST pad in order to apply 2x2 kernel
+            # # partial solution 1:
+            # # fatal issue: when input is [256,1,1], MUST pad in order to apply 2x2 kernel
+            # if main_block_kernel_size == 2:
+            #     layer_locator = {
+            #         LayerLoc.MAIN_BLOCK_CONV1: nn.LazyConv2d(
+            #             num_channels,
+            #             kernel_size=2, padding=1, # ResidualBlock.conv1
+            #             stride=strides, bias=use_bias
+            #             ), 
+            #          LayerLoc.MAIN_BLOCK_CONV2: nn.LazyConv2d(
+            #             num_channels,
+            #             kernel_size=2, padding=0, # ResidualBlock.conv2
+            #             bias=use_bias
+            #             ),
+            #          LayerLoc.SHORTCUT_IDENTITY: nn.Identity(),
+            #          LayerLoc.SHORTCUT_CONV_STEM: nn.LazyConv2d(
+            #             num_channels, 
+            #             kernel_size=1, stride=strides, # ResidualBlock.conv_stem
+            #             bias=use_bias
+            #             )
+            #         }
+            
+            # partial solution 3:
             if main_block_kernel_size == 2:
                 layer_locator = {
-                    LayerLoc.MAIN_BLOCK_CONV1: nn.LazyConv2d(
-                        num_channels,
-                        kernel_size=2, padding=1, # ResidualBlock.conv1
-                        stride=strides, bias=use_bias
-                        ), 
-                     LayerLoc.MAIN_BLOCK_CONV2: nn.LazyConv2d(
-                        num_channels,
-                        kernel_size=2, padding=0, # ResidualBlock.conv2
-                        bias=use_bias
+                    LayerLoc.MAIN_BLOCK_CONV1: nn.Sequential(
+                        nn.LazyConv2d(
+                            num_channels,
+                            kernel_size=2, padding=1, # ResidualBlock.conv1
+                            stride=strides, bias=use_bias
+                            ), # result: image size += 1
+                        nn.AvgPool2d(
+                            kernel_size=2, stride=1
+                            ) # result: image size -= 1
+                        ),
+                     LayerLoc.MAIN_BLOCK_CONV2: nn.Sequential(
+                        nn.LazyConv2d(
+                            num_channels,
+                            kernel_size=2, padding=1, # ResidualBlock.conv2
+                            bias=use_bias
+                            ), # result: image size += 1
+                        nn.AvgPool2d(
+                            kernel_size=2, stride=1
+                            ) # result: image size -= 1
                         ),
                      LayerLoc.SHORTCUT_IDENTITY: nn.Identity(),
                      LayerLoc.SHORTCUT_CONV_STEM: nn.LazyConv2d(
