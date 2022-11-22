@@ -129,3 +129,6 @@ dmypy.json
 .pyre/
 
 .data
+model/*
+!/model/nish_49m_deep6_cyclic_lr_bottleneck_v2.pt
+/notebooks/wandb
