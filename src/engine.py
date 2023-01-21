@@ -32,9 +32,6 @@ def train_one_epoch(
 
         loss = criterion(y_pred, label)
 
-        if lr_scheduler is not None and isinstance(lr_scheduler, torch.optim.lr_scheduler.OneCycleLR):
-            lr_scheduler.step()
-
         # calculate accuracy (reference: HW4 Q4 def calculate_accuracy(y_pred, y))
         top_y_pred = y_pred.argmax(
             1, keepdim=True
@@ -44,6 +41,9 @@ def train_one_epoch(
 
         loss.backward()
         optimizer.step()
+
+        if lr_scheduler is not None and isinstance(lr_scheduler, torch.optim.lr_scheduler.OneCycleLR):
+            lr_scheduler.step()
 
         epoch_loss += loss.item()
         epoch_acc += acc.item()
